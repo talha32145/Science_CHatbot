@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import pickle
 from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import pad_sequences
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import os
 
 app = Flask(__name__)
 
@@ -29,6 +30,8 @@ def predict_sentence(sentence):
     # ============== Encoder ==============
 
     input_seq = encoder_tokenizer.texts_to_sequences([sentence])
+    if len(input_seq[0]) == 0:
+        return "Sorry, I don't understand."
 
     input_seq = pad_sequences(
         input_seq,
@@ -85,6 +88,9 @@ def chat():
 
     message = data.get("message", "")
 
+    if not message:
+        return jsonify({"reply": "Please enter a message."})
+
     reply = predict_sentence(message)
 
     return jsonify({
@@ -92,4 +98,5 @@ def chat():
     })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
